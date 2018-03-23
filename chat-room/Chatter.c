@@ -23,14 +23,16 @@ int main(int argc, char *argv[]) {
   writer = dds_create_writer(participant, topic, NULL, NULL);
   DDS_ERR_CHECK(writer, DDS_CHECK_REPORT | DDS_CHECK_EXIT);
 
+  ChatMsg.content = dds_string_alloc(CHAT_MSG_CONTENT_SIZE);
+
   for(uint16_t i=0; i<send_count; i++) {
     ChatMsg.userID = ownID;
     ChatMsg.index = i;
-    ChatMsg.content = dds_string_alloc(CHAT_MSG_CONTENT_SIZE);
     sprintf(ChatMsg.content, "Hello World Message count: %d from %d", ChatMsg.index, ChatMsg.userID);
     ret = dds_write(writer, &ChatMsg);
     DDS_ERR_CHECK(ret, DDS_CHECK_REPORT | DDS_CHECK_EXIT);
   }
+  dds_string_free(ChatMsg.content);
   
   ret = dds_delete(participant);
   DDS_ERR_CHECK(ret, DDS_CHECK_REPORT | DDS_CHECK_EXIT);
