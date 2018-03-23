@@ -5,7 +5,13 @@
             "includePath": [
                 "/usr/include",
                 "/usr/local/include",
-                "${workspaceRoot}"
+                "/usr/local/include/ddsc",
+                "/usr/local/include/os",
+                "/usr/local/include/security",
+                "${workspaceRoot}",
+                "${workspaceRoot}/build/hello-world",
+                "${workspaceRoot}/build/chat-room",
+                "/System/Library/Frameworks/Kernel.framework/Versions/A/Headers"
             ],
             "defines": [],
             "intelliSenseMode": "clang-x64",
@@ -13,6 +19,9 @@
                 "path": [
                     "/usr/include",
                     "/usr/local/include",
+                    "/usr/local/include/ddsc",
+                    "/usr/local/include/os",
+                    "/usr/local/include/security",
                     "${workspaceRoot}"
                 ],
                 "limitSymbolsToIncludedHeaders": true,
