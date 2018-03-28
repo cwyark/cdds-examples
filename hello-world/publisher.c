@@ -18,7 +18,7 @@ int main (int argc, char **argv) {
 
   writer = dds_create_writer(participant, topic, NULL, NULL);
 
-  printf("=== [Publisher] Waiting for a reader to be discovered ... \n");
+  printf("[Publisher] Waiting for a reader to be discovered ... \n");
 
   ret = dds_set_enabled_status(writer, DDS_PUBLICATION_MATCHED_STATUS);
 
@@ -36,9 +36,14 @@ int main (int argc, char **argv) {
   }
 
   msg.userID = 1;
+
+  /* Not that msg.message is pointer which point to a static string located in .bss section, 
+   * the pointed memory can not be modified.
+   * */
+
   msg.message = "HelloWorld";
 
-  printf("=== [Publisher] Writing : ");
+  printf("[Publisher] Writing : ");
   printf("Message (%d, %s)\n", msg.userID, msg.message);
 
   ret = dds_write(writer, &msg);

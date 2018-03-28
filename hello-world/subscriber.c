@@ -22,13 +22,14 @@ int main(int argc, char **argv)
   topic = dds_create_topic(participant, &HelloWorldData_Msg_desc, "HelloWorldData_Msg", NULL, NULL);
   DDS_ERR_CHECK(topic, DDS_CHECK_REPORT | DDS_CHECK_EXIT);
 
+  /* Create a reliable reader. */
   qos = dds_qos_create();
   dds_qset_reliability(qos, DDS_RELIABILITY_RELIABLE, DDS_SECS(10));
   reader = dds_create_reader(participant, topic, qos, NULL);
   DDS_ERR_CHECK(reader, DDS_CHECK_REPORT | DDS_CHECK_EXIT);
   dds_qos_delete(qos);
 
-  printf("\n === [Subscriber] Waiting for a sample ... \n");
+  printf("[Subscriber] Waiting for a sample ... \n");
 
   /** Initialize smaple buffer, by pointing the void pointer within
    * the buffer array to a valid sample memory localtion
@@ -42,7 +43,7 @@ int main(int argc, char **argv)
 
     if ((ret > 0) && (infos[0].valid_data)) {
       msg = (HelloWorldData_Msg*) samples[0];
-      printf("=== [Subscriber] Received  : ");
+      printf("[Subscriber] Received  : ");
       printf("Mssage (%d, %s)\n", msg->userID, msg->message);
       break;
     } else {
