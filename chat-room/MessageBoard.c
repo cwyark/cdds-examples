@@ -12,5 +12,4 @@ int main(int argc, char *argv[])
   participant = dds_create_participant(DDS_DOMAIN_DEFAULT, NULL, NULL);
   DDS_ERR_CHECK(participant, DDS_CHECK_REPORT | DDS_CHECK_EXIT);
 
-  topic = dds_create_topic(participant, )
 }
