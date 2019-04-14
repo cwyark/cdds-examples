@@ -1,19 +1,27 @@
-## CycloneDDS examples 
+## CycloneDDS examples
 
-This repository is created for the [cdds](https://www.github.com/atolab/cdds) examples. 
+This repository is created for the [cyclonedds](https://github.com/eclipse-cyclonedds/cyclonedds) examples.
 
-### How to compile and install cdds 
+### How to compile and install CycloneDDS
 
 #### prerequisite
 
-``Java8, cmake, gcc``
+* JDK 1.8 (Both openjdk or Orcale JDK are workable)
+* cmake (at least 3.10)
+* gcc, g++
+* maven (at least 3.0)
 
 ```bash
-$> git clone https://www.github.com/atolab/cdds ~/cdds
-$> cd ~/cdds
-$> mkdir build
-$> cd build 
-$> cmake ../src
-$> make
-$> make install
+$> git clone https://github.com/eclipse-cyclonedds/cyclonedds
+$> cd ./cyclonedds
+$> cmake -Bbuild -H. -DCMAKE_INSTALL_PREFIX=/opt/CycloneDDS
+$> cmake --build build
+$> cmake --build build --target install
+```
+
+### How to compile this example
+
+```bash
+$> cmake -Bbuild -H.
+$> cmake --build build
 ```

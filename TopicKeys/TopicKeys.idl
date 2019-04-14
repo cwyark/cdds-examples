@@ -1,0 +1,17 @@
+module TopicKeys
+{
+  struct KeyedMsg
+  {
+    short userID;
+    short value;
+  };
+#pragma keylist KeyedMsg userID
+
+  struct KeylessMsg
+  {
+    short userID;
+    short value;
+  };
+#pragma keylist KeylessMsg
+
+};
