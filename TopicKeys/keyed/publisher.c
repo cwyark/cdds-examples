@@ -46,15 +46,16 @@ int main (int argc, char **argv) {
     dds_sleepfor(DDS_MSECS(20));
   } while (!(status & DDS_PUBLICATION_MATCHED_STATUS));
 
+  printf("=== [Publisher] Publishing keyed samples ===\n");
+
   for (uint32_t i = 0; i < iterations; i++) {
     TopicKeys_KeyedMsg msg;
-    msg.userID = 0;
+    msg.userID = i;
     msg.value = i;
     printf("Sending msg: userID: %d, value: %d\n", msg.userID, msg.value);
     result_returned = dds_write(writer, &msg);
     if (result_returned != DDS_RETCODE_OK)
       DDS_FATAL("dds_writer: %s\n", dds_strretcode(-result_returned));
-    dds_sleepfor(DDS_MSECS(10));
   }
 
   result_returned = dds_delete(participant);

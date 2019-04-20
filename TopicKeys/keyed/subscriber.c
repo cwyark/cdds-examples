@@ -4,6 +4,7 @@
 #include "stdlib.h"
 
 #define MAX_SAMPLES 10
+#define WAIT_EXIT_TIMEOUT 10
 
 int main(int argc, char** argv)
 {
@@ -31,7 +32,7 @@ int main(int argc, char** argv)
 
   /* Create a reliable QoS data reader */
   rQos = dds_create_qos();
-  dds_qset_reliability(rQos, DDS_RELIABILITY_RELIABLE, DDS_SECS(10));
+  dds_qset_reliability(rQos, DDS_RELIABILITY_RELIABLE, DDS_MSECS(10));
   reader = dds_create_reader(participant, topic, rQos, NULL);
   if (reader < 0)
     DDS_FATAL("dds_create_reader: %s\n", dds_strretcode(-reader));
@@ -52,43 +53,37 @@ int main(int argc, char** argv)
   if (result_returned != DDS_RETCODE_OK)
     DDS_FATAL("dds_waitset_attach: %s\n", result_returned);
 
-  printf("\n=== [Subscriber] Waiting for a matched publisher ===\n");
+  printf("\n=== [Subscriber] Waiting for a incoming keyed samples ===\n");
 
-  result_returned = dds_set_status_mask(reader, DDS_SUBSCRIPTION_MATCHED_STATUS);
-  if (result_returned < 0)
-    DDS_FATAL("dds_set_status_mask: %s\n", dds_strretcode(-result_returned));
-
-  uint32_t status;
-
-  do {
-    result_returned = dds_get_status_changes(reader, &status);
-    if (result_returned != DDS_RETCODE_OK) {
-      DDS_FATAL("dds_get_status_changes: %s\n", dds_strretcode(-result_returned));
-    }
-    dds_sleepfor(DDS_MSECS(10));
-  } while (!(status & DDS_SUBSCRIPTION_MATCHED_STATUS));
+  dds_attach_t triggered;
 
   while (true) {
-    void *samples[MAX_SAMPLES] = {0};
-    dds_sample_info_t infos[MAX_SAMPLES];
-    samples_returned = dds_take(reader, samples, infos, MAX_SAMPLES,
-        MAX_SAMPLES);
-    if (samples_returned < 0) {
-      DDS_FATAL("dds_read: %s\n", samples_returned);
-    } else {
-      if (samples_returned == 0)
-        continue;
-      for (uint16_t j = 0; j < samples_returned; j++) {
-        if (infos[j].valid_data) {
-          TopicKeys_KeyedMsg* msg = (TopicKeys_KeyedMsg*)samples[j];
-          printf("=== [Subscriber] Sample receoved ===\n");
-          printf("Sample: [userID]: %d, [value]: %d\n", msg->userID, msg->value);
-        } else {
-          printf("invalid data: %d", j);
+    result_returned = dds_waitset_wait(waitset, &triggered, 1,
+        DDS_SECS(WAIT_EXIT_TIMEOUT));
+    if (result_returned == 0) {
+      printf("There's no incoming data for %d seconds, timeout and exit\n",
+          WAIT_EXIT_TIMEOUT);
+      exit(EXIT_FAILURE);
+    }
+    for (uint8_t readers = 0; readers < result_returned; readers++) {
+      void *samples[MAX_SAMPLES] = {0};
+      dds_sample_info_t infos[MAX_SAMPLES];
+      samples_returned = dds_take(reader, samples, infos, MAX_SAMPLES,
+          MAX_SAMPLES);
+      if (samples_returned < 0) {
+        DDS_FATAL("dds_read: %s\n", samples_returned);
+      } else {
+        if (samples_returned == 0)
+          continue;
+        for (uint16_t j = 0; j < samples_returned; j++) {
+          if (infos[j].valid_data) {
+            TopicKeys_KeyedMsg* msg = (TopicKeys_KeyedMsg*)samples[j];
+            printf("Sample: [userID]: %d, [value]: %d\n", msg->userID, msg->value);
+          }
         }
       }
+      dds_return_loan(reader, samples, samples_returned);
     }
-    dds_return_loan(reader, samples, samples_returned);
   }
 
   result_returned = dds_delete(participant);
