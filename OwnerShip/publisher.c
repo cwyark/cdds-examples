@@ -83,13 +83,14 @@ int main(int argc, char** argv)
 
   for (uint16_t i = 0; i < iteration; i++) {
     msg.ticker = dds_string_dup("MSFT");
-    msg.price = 0.0;
+    msg.price = i;
     msg.publisher = dds_string_dup(publisher_name);
     msg.strength = strength;
     printf("sending Message (%s %f %s %d)\n", msg.ticker, msg.price, msg.publisher, msg.strength);
     rc = dds_write(writer, &msg);
     if (rc != DDS_RETCODE_OK)
       DDS_FATAL("dds_write: %s\n", dds_strretcode(-rc));
+    dds_sleepfor(DDS_USECS(10));
   }
 
   rc = dds_delete(participant);
