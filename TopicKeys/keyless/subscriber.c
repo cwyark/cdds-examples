@@ -3,7 +3,7 @@
 #include "stdio.h"
 #include "stdlib.h"
 
-#define MAX_SAMPLES 10
+#define MAX_SAMPLES 100
 #define WAIT_EXIT_TIMEOUT 10
 
 int main(int argc, char** argv)
@@ -53,11 +53,30 @@ int main(int argc, char** argv)
   if (result_returned != DDS_RETCODE_OK)
     DDS_FATAL("dds_waitset_attach: %s\n", result_returned);
 
+  uint32_t status;
+  uint32_t timeout = 500;
+
+  printf("\n=== [Subscriber] Waiting for a matched publisher ===\n");
+
+  // Wait for matching Data Reader
+  do {
+    result_returned = dds_get_status_changes(reader, &status);
+    if (result_returned != DDS_RETCODE_OK)
+      DDS_FATAL("dds_get_status_changes: %s\n", dds_strretcode(-result_returned));
+    dds_sleepfor(DDS_MSECS(20));
+    timeout--;
+  } while (!(status & DDS_SUBSCRIPTION_MATCHED_STATUS) && (timeout != 0));
+
+  if (timeout == 0) {
+    printf("waiting for matched publisher timeout, exit..\n");
+    goto  cleanup;
+  }
+
   printf("\n=== [Subscriber] Waiting for a incoming keyless samples ===\n");
 
   dds_attach_t triggered;
 
-  while (true) {
+  while (!dds_triggered(waitset)) {
     result_returned = dds_waitset_wait(waitset, &triggered, 1,
         DDS_SECS(WAIT_EXIT_TIMEOUT));
     if (result_returned == 0) {
@@ -85,7 +104,7 @@ int main(int argc, char** argv)
       dds_return_loan(reader, samples, samples_returned);
     }
   }
-
+cleanup:
   result_returned = dds_delete(participant);
   if (result_returned != DDS_RETCODE_OK) {
     DDS_FATAL("dds_delete: %s\n", dds_strretcode(-result_returned));

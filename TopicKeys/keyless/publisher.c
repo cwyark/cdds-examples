@@ -11,7 +11,7 @@ int main (int argc, char **argv) {
   dds_entity_t publisher;
   dds_qos_t *wQos;
   dds_entity_t writer;
-  uint32_t iterations = 10;
+  uint32_t iterations = 3;
 
   participant = dds_create_participant(DDS_DOMAIN_DEFAULT, NULL, NULL);
   if (participant < 0)
@@ -49,13 +49,20 @@ int main (int argc, char **argv) {
   printf("=== [Publisher] Publishing keyless samples ===\n");
 
   for (uint32_t i = 0; i < iterations; i++) {
-    TopicKeys_KeylessMsg msg;
-    msg.userID = i;
-    msg.value = i;
-    printf("Sending msg: userID: %d, value: %d\n", msg.userID, msg.value);
-    result_returned = dds_write(writer, &msg);
-    if (result_returned != DDS_RETCODE_OK)
-      DDS_FATAL("dds_writer: %s\n", dds_strretcode(-result_returned));
+    for (uint32_t j = 0; j < iterations; j++) {
+      TopicKeys_KeylessMsg msg;
+      msg.userID = i;
+      msg.value = j;
+      printf("Sending msg: userID: %d, value: %d\n", msg.userID, msg.value);
+      result_returned = dds_write(writer, &msg);
+      if (result_returned != DDS_RETCODE_OK)
+        DDS_FATAL("dds_writer: %s\n", dds_strretcode(-result_returned));
+      /*
+       * Don't know why I need a delay after dds_write even if I set
+       * up reliable QoS
+       */
+      dds_sleepfor(DDS_USECS(10));
+    }
   }
 
   result_returned = dds_delete(participant);

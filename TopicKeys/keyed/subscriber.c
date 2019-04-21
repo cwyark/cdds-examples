@@ -3,7 +3,7 @@
 #include "stdio.h"
 #include "stdlib.h"
 
-#define MAX_SAMPLES 10
+#define MAX_SAMPLES 100
 #define WAIT_EXIT_TIMEOUT 10
 
 int main(int argc, char** argv)
@@ -53,6 +53,24 @@ int main(int argc, char** argv)
   if (result_returned != DDS_RETCODE_OK)
     DDS_FATAL("dds_waitset_attach: %s\n", result_returned);
 
+  printf("\n=== [Subscriber] Waiting for a matched subscriber ===\n");
+
+  uint32_t status;
+  uint32_t timeout = 500;
+
+  do {
+    result_returned = dds_get_status_changes(reader, &status);
+    if (result_returned != DDS_RETCODE_OK)
+      DDS_FATAL("dds_get_status_changes: %s\n", dds_strretcode(-result_returned));
+    dds_sleepfor(DDS_MSECS(20));
+    timeout--;
+  } while (!(status & DDS_SUBSCRIPTION_MATCHED_STATUS) && (timeout != 0));
+
+  if (timeout == 0) {
+    printf("wait for a matched publisher timeout, exit..\n");
+    goto cleanup;
+  }
+
   printf("\n=== [Subscriber] Waiting for a incoming keyed samples ===\n");
 
   dds_attach_t triggered;
@@ -86,6 +104,7 @@ int main(int argc, char** argv)
     }
   }
 
+cleanup:
   result_returned = dds_delete(participant);
   if (result_returned != DDS_RETCODE_OK) {
     DDS_FATAL("dds_delete: %s\n", dds_strretcode(-result_returned));
