@@ -12,6 +12,7 @@ int main(int argc, char** argv)
   dds_return_t samples_returned;
   dds_return_t result_returned;
   dds_entity_t participant;
+  dds_qos_t* tQos;
   dds_entity_t topic;
   dds_qos_t* rQos;
   dds_entity_t reader;
@@ -23,20 +24,23 @@ int main(int argc, char** argv)
   if (participant < 0)
     DDS_FATAL("dds_create_participant: %s\n", dds_strretcode(-participant));
 
+  tQos = dds_create_qos();
+  dds_qset_reliability(tQos, DDS_RELIABILITY_RELIABLE, DDS_SECS(2));
   /* Create a topic */
   topic = dds_create_topic(participant,
       &TopicKeys_KeyedMsg_desc, "TopicKeys_KeyedMsg",
-      NULL, NULL);
+      tQos, NULL);
   if (topic < 0)
     DDS_FATAL("dds_create_topic: %s\n", dds_strretcode(-topic));
 
   /* Create a reliable QoS data reader */
   rQos = dds_create_qos();
-  dds_qset_reliability(rQos, DDS_RELIABILITY_RELIABLE, DDS_MSECS(10));
+  dds_copy_qos(rQos, tQos);
   reader = dds_create_reader(participant, topic, rQos, NULL);
   if (reader < 0)
     DDS_FATAL("dds_create_reader: %s\n", dds_strretcode(-reader));
   dds_delete_qos(rQos);
+  dds_delete_qos(tQos);
 
   /* create waitset */
   waitset = dds_create_waitset(participant);

@@ -7,6 +7,7 @@ int main (int argc, char **argv) {
   dds_retcode_t retcode;
   dds_return_t result_returned;
   dds_entity_t participant;
+  dds_qos_t* tQos;
   dds_entity_t topic;
   dds_entity_t publisher;
   dds_qos_t *wQos;
@@ -17,6 +18,8 @@ int main (int argc, char **argv) {
   if (participant < 0)
     DDS_FATAL("dds_create_participant: %s\n", dds_strretcode(-participant));
 
+  tQos = dds_create_qos();
+  dds_qset_reliability(tQos, DDS_RELIABILITY_RELIABLE, DDS_SECS(2));
   topic = dds_create_topic(participant,
       &TopicKeys_KeyedMsg_desc, "TopicKeys_KeyedMsg",
       NULL, NULL);
@@ -24,11 +27,12 @@ int main (int argc, char **argv) {
     DDS_FATAL("dds_create_topic: %s\n", dds_strretcode(-topic));
 
   wQos = dds_create_qos();
-  dds_qset_reliability(wQos, DDS_RELIABILITY_RELIABLE, DDS_SECS(10));
+  dds_copy_qos(wQos, tQos);
   writer = dds_create_writer(participant, topic, wQos, NULL);
   if (writer < 0)
     DDS_FATAL("dds_create_writer: %s\n", dds_strretcode(-writer));
   dds_delete_qos(wQos);
+  dds_delete_qos(tQos);
 
   printf("=== [Publisher] Waiting for matching subscriber ===\n");
 
@@ -57,7 +61,6 @@ int main (int argc, char **argv) {
       result_returned = dds_write(writer, &msg);
       if (result_returned != DDS_RETCODE_OK)
         DDS_FATAL("dds_writer: %s\n", dds_strretcode(-result_returned));
-      dds_sleepfor(DDS_USECS(10));
     }
   }
 
