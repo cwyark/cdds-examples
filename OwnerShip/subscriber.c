@@ -2,47 +2,75 @@
 #include "ddsc/dds.h"
 #include "stdio.h"
 #include "stdlib.h"
+#include "argparse.h"
 
 #define MAX_SAMPLES 100
-#define WAIT_EXIT_TIMEOUT 10
+#define WAIT_EXIT_TIMEOUT 100
+
+static const char *const usage[] = {
+  "OwnerShipSubscriber [options] [[--] args]",
+  NULL
+};
+
 
 int main(int argc, char** argv)
 {
   dds_entity_t participant;
+  dds_qos_t *tQos;
   dds_entity_t topic;
+  dds_qos_t *rQos;
   dds_entity_t reader;
   dds_entity_t waitSet;
   dds_entity_t readCond;
-  dds_duration_t waitTimeout = DDS_SECS(10);
-  dds_attach_t wsresult[1];
-  size_t wsresult_size = 1;
-  OwnerShipData_Stock* msg;
-  void* samples[MAX_SAMPLES];
-  dds_sample_info_t infos[MAX_SAMPLES];
   dds_return_t result_returned;
   dds_return_t samples_returned;
-  dds_qos_t* qos;
-  (void)argc;
-  (void)argv;
+  bool ownership_exclusive = false;
+
+  struct argparse_option options[] = {
+    OPT_HELP(),
+    OPT_GROUP("Basic options"),
+    OPT_BOOLEAN('e', "exclusive", &ownership_exclusive, "Ownership exclusive. Default: false"),
+    OPT_END(),
+  };
+
+  struct argparse argparse;
+  argparse_init(&argparse, options, usage, 0);
+  argc = argparse_parse(&argparse, argc, (const char**)argv);
+  if (argc != 0) {
+    argparse_usage(&argparse);
+    exit(EXIT_SUCCESS);
+  }
 
   /* Create a Participant. */
   participant = dds_create_participant(DDS_DOMAIN_DEFAULT, NULL, NULL);
   if (participant < 0)
     DDS_FATAL("dds_create_participant: %s\n", dds_strretcode(-participant));
 
+  tQos = dds_create_qos();
+  dds_qset_reliability(tQos, DDS_RELIABILITY_RELIABLE, DDS_SECS(10));
+  if (ownership_exclusive == true) {
+    dds_qset_ownership(tQos, DDS_OWNERSHIP_EXCLUSIVE);
+  } else {
+    dds_qset_ownership(tQos, DDS_OWNERSHIP_SHARED);
+  }
+
   /* Create a Topic. */
   topic = dds_create_topic(
-      participant, &OwnerShipData_Stock_desc, "OwnerShipData_Stock", NULL, NULL);
+      participant, &OwnerShipData_Stock_desc, "OwnerShipData_Stock", tQos, NULL);
   if (topic < 0)
     DDS_FATAL("dds_create_topic: %s\n", dds_strretcode(-topic));
 
   /* Create a reliable Reader. */
-  qos = dds_create_qos();
-  dds_qset_reliability(qos, DDS_RELIABILITY_RELIABLE, DDS_SECS(10));
-  reader = dds_create_reader(participant, topic, qos, NULL);
+  rQos = dds_create_qos();
+  result_returned = dds_copy_qos(rQos, tQos);
+  if (result_returned < 0)
+    DDS_FATAL("dds_copy_qos: %s", dds_strretcode(-result_returned));
+  dds_delete_qos(tQos);
+
+  reader = dds_create_reader(participant, topic, rQos, NULL);
   if (reader < 0)
     DDS_FATAL("dds_create_reader: %s\n", dds_strretcode(-reader));
-  dds_delete_qos(qos);
+  dds_delete_qos(rQos);
 
   // Create a waitSet
   waitSet = dds_create_waitset(participant);
@@ -60,7 +88,7 @@ int main(int argc, char** argv)
     DDS_FATAL("dds_waitset_attach: %s\n", dds_strretcode(-result_returned));
 
   uint32_t status;
-  uint32_t timeout = 500;
+  uint32_t timeout = 5000;
 
   printf("Waiting for a matched publisher\n");
 
