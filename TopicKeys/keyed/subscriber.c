@@ -8,7 +8,7 @@
 
 int main(int argc, char** argv)
 {
-  dds_retcode_t retcode;
+  dds_return_t retcode;
   dds_return_t samples_returned;
   dds_return_t result_returned;
   dds_entity_t participant;

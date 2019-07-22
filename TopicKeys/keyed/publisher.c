@@ -4,7 +4,7 @@
 #include "stdlib.h"
 
 int main (int argc, char **argv) {
-  dds_retcode_t retcode;
+  dds_return_t retcode;
   dds_return_t result_returned;
   dds_entity_t participant;
   dds_qos_t* tQos;
