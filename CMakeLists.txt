@@ -10,8 +10,7 @@ endif()
 # CmakeToolHelpers is used for liux env
 include(CMakeToolsHelpers OPTIONAL)
 
-add_subdirectory(library)
 add_subdirectory(HelloWorld)
 add_subdirectory(ChatRoom)
-add_subdirectory(OwnerShip)
+#add_subdirectory(OwnerShip)
 add_subdirectory(TopicKeys)
